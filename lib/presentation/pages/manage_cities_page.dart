@@ -125,7 +125,7 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
@@ -390,6 +390,8 @@ class _CityWeatherSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         border: Border(
           bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1),
         ),
@@ -423,6 +425,7 @@ class _CityWeatherSheet extends StatelessWidget {
                 SnackBar(
                   content: Text('Added $cityName to saved cities'),
                   duration: const Duration(seconds: 2),
+                  backgroundColor: Colors.green,
                 ),
               );
             },

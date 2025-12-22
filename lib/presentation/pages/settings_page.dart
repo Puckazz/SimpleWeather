@@ -12,7 +12,7 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
@@ -24,7 +24,7 @@ class SettingsPage extends StatelessWidget {
         title: Text(
           'Settings',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Theme.of(context).textTheme.headlineSmall!.color,
           ),
