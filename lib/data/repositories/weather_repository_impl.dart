@@ -1,11 +1,17 @@
 import 'package:weather_app/core/utils/logger.dart';
 import 'package:weather_app/data/datasources/weather_remote_data_source.dart';
 import 'package:weather_app/data/models/weather_model.dart';
+import 'package:weather_app/data/models/forecast_model.dart';
 import 'package:weather_app/domain/entities/weather_entity.dart';
 
 abstract class WeatherRepository {
   Future<WeatherEntity> getWeatherByCity(String city);
   Future<WeatherEntity> getWeatherByCoordinates(
+    double latitude,
+    double longitude,
+  );
+  Future<ForecastModel> getForecastByCity(String city);
+  Future<ForecastModel> getForecastByCoordinates(
     double latitude,
     double longitude,
   );
@@ -45,6 +51,35 @@ class WeatherRepositoryImpl implements WeatherRepository {
     }
   }
 
+  @override
+  Future<ForecastModel> getForecastByCity(String city) async {
+    logger.d('Repository: getting forecast for $city');
+    try {
+      final forecastModel = await remoteDataSource.getForecastByCity(city);
+      logger.i('Successfully retrieved forecast for $city');
+      return forecastModel;
+    } catch (e) {
+      logger.e('Repository error fetching forecast: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<ForecastModel> getForecastByCoordinates(
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      final forecastModel = await remoteDataSource.getForecastByCoordinates(
+        latitude,
+        longitude,
+      );
+      return forecastModel;
+    } catch (e) {
+      throw Exception('Repository Error fetching forecast: $e');
+    }
+  }
+
   /// Convert WeatherModel to WeatherEntity
   WeatherEntity _modelToEntity(WeatherModel model) {
     return WeatherEntity(
@@ -67,6 +102,7 @@ class WeatherRepositoryImpl implements WeatherRepository {
       icon: model.icon,
       sunrise: model.sunrise,
       sunset: model.sunset,
+      timezone: model.timezone,
     );
   }
 }

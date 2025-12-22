@@ -20,6 +20,7 @@ class WeatherEntity extends Equatable {
   final String icon;
   final int sunrise;
   final int sunset;
+  final int timezone; // Timezone offset in seconds from UTC
 
   const WeatherEntity({
     required this.id,
@@ -41,6 +42,7 @@ class WeatherEntity extends Equatable {
     required this.icon,
     required this.sunrise,
     required this.sunset,
+    required this.timezone,
   });
 
   @override
@@ -48,6 +50,7 @@ class WeatherEntity extends Equatable {
     id,
     name,
     country,
+    timezone,
     temperature,
     feelsLike,
     tempMin,

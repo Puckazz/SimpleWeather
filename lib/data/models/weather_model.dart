@@ -20,6 +20,7 @@ class WeatherModel extends Equatable {
   final String icon;
   final int sunrise;
   final int sunset;
+  final int timezone;
 
   const WeatherModel({
     required this.id,
@@ -41,6 +42,7 @@ class WeatherModel extends Equatable {
     required this.icon,
     required this.sunrise,
     required this.sunset,
+    required this.timezone,
   });
 
   /// Convert JSON to WeatherModel
@@ -74,6 +76,7 @@ class WeatherModel extends Equatable {
       icon: weatherData['icon'] as String? ?? '',
       sunrise: sys['sunrise'] as int? ?? 0,
       sunset: sys['sunset'] as int? ?? 0,
+      timezone: json['timezone'] as int? ?? 0,
     );
   }
 
@@ -95,6 +98,7 @@ class WeatherModel extends Equatable {
       'wind': {'speed': windSpeed, 'deg': windDeg},
       'clouds': {'all': cloudiness},
       'dt': dateTime,
+      'timezone': timezone,
       'weather': [
         {'main': main, 'description': description, 'icon': icon},
       ],
@@ -122,5 +126,6 @@ class WeatherModel extends Equatable {
     icon,
     sunrise,
     sunset,
+    timezone,
   ];
 }
