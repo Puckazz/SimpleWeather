@@ -10,7 +10,7 @@ Clone the source code and navigate to the project directory:
 
 ```bash
 git clone <REPOSITORY_URL>
-cd weather-app
+cd SimpleWeather
 ```
 
 ### 2️⃣ Setup Environment Variables
