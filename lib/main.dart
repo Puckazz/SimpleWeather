@@ -11,11 +11,18 @@ import 'package:weather_app/presentation/controllers/weather_controller.dart';
 import 'package:weather_app/presentation/controllers/theme_controller.dart';
 import 'package:weather_app/presentation/pages/home_page.dart';
 import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart'; 
+import 'package:flutter/foundation.dart' show kDebugMode;
 
 void main() {
   AppConfig.validate();
-  runApp(DevicePreview(enabled: true, builder: (context) => const MyApp()));
-}
+  runApp(
+    kDebugMode // Check if running in debug mode
+        ? DevicePreview(
+            enabled: true, // You can also use kDebugMode here for clarity
+            builder: (context) => const MyApp(),
+          )
+        : const MyApp(),
+  );}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
