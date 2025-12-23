@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/presentation/controllers/weather_controller.dart';
+import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
 import 'package:weather_app/presentation/pages/settings_page.dart';
 import 'package:weather_app/presentation/pages/manage_cities_page.dart';
 import 'package:weather_app/presentation/widgets/widgets.dart';
@@ -19,7 +20,11 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     // Load default city on startup
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WeatherController>().fetchWeatherByCity('San Francisco');
+      final unitController = context.read<TemperatureUnitController>();
+      context.read<WeatherController>().fetchWeatherByCity(
+        'San Francisco',
+        units: unitController.unit,
+      );
     });
   }
 
@@ -93,8 +98,10 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
+              final unitController = context.read<TemperatureUnitController>();
               context.read<WeatherController>().fetchWeatherByCity(
                 'San Francisco',
+                units: unitController.unit,
               );
             },
             child: const Text('Retry'),

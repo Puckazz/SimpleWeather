@@ -10,6 +10,7 @@ import 'package:weather_app/domain/usecases/get_weather.dart';
 import 'package:weather_app/presentation/controllers/weather_controller.dart';
 import 'package:weather_app/presentation/controllers/theme_controller.dart';
 import 'package:weather_app/presentation/pages/home_page.dart';
+import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart'; 
 
 void main() {
   AppConfig.validate();
@@ -26,6 +27,9 @@ class MyApp extends StatelessWidget {
         // Theme Controller
         ChangeNotifierProvider<ThemeController>(
           create: (_) => ThemeController(),
+        ),
+        ChangeNotifierProvider<TemperatureUnitController>(
+          create: (_) => TemperatureUnitController(),
         ),
         // API Service
         Provider<ApiService>(create: (_) => ApiService()),

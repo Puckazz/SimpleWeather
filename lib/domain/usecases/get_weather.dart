@@ -8,28 +8,41 @@ class GetWeatherUseCase {
   GetWeatherUseCase({required this.repository});
 
   /// Get weather by city name
-  Future<WeatherEntity> call(String city) async {
-    return await repository.getWeatherByCity(city);
+  Future<WeatherEntity> call(String city, {String units = 'metric'}) async {
+    return await repository.getWeatherByCity(city, units: units);
   }
 
   /// Get weather by coordinates
   Future<WeatherEntity> callByCoordinates(
     double latitude,
-    double longitude,
-  ) async {
-    return await repository.getWeatherByCoordinates(latitude, longitude);
+    double longitude, {
+    String units = 'metric',
+  }) async {
+    return await repository.getWeatherByCoordinates(
+      latitude,
+      longitude,
+      units: units,
+    );
   }
 
   /// Get forecast by city name
-  Future<ForecastModel> getForecastByCity(String city) async {
-    return await repository.getForecastByCity(city);
+  Future<ForecastModel> getForecastByCity(
+    String city, {
+    String units = 'metric',
+  }) async {
+    return await repository.getForecastByCity(city, units: units);
   }
 
   /// Get forecast by coordinates
   Future<ForecastModel> getForecastByCoordinates(
     double latitude,
-    double longitude,
-  ) async {
-    return await repository.getForecastByCoordinates(latitude, longitude);
+    double longitude, {
+    String units = 'metric',
+  }) async {
+    return await repository.getForecastByCoordinates(
+      latitude,
+      longitude,
+      units: units,
+    );
   }
 }

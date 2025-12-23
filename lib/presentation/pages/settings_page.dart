@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/presentation/controllers/theme_controller.dart';
+import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
+import 'package:weather_app/presentation/controllers/weather_controller.dart';
 import 'package:weather_app/presentation/widgets/widgets.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -101,12 +103,42 @@ class SettingsPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              Row(
-                children: [
-                  _buildUnitButton(context, '°F', true),
-                  const SizedBox(width: 8),
-                  _buildUnitButton(context, '°C', false),
-                ],
+              Consumer<TemperatureUnitController>(
+                builder: (context, unitController, _) => Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        await unitController.setUnit(true); // Fahrenheit
+                        // Refresh weather data with new units
+                        if (context.mounted) {
+                          final weatherController = context.read<WeatherController>();
+                          await weatherController.refreshWithUnits('imperial');
+                        }
+                      },
+                      child: _buildUnitButton(
+                        context,
+                        '°F',
+                        unitController.isFahrenheit,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () async {
+                        await unitController.setUnit(false); // Celsius
+                        // Refresh weather data with new units
+                        if (context.mounted) {
+                          final weatherController = context.read<WeatherController>();
+                          await weatherController.refreshWithUnits('metric');
+                        }
+                      },
+                      child: _buildUnitButton(
+                        context,
+                        '°C',
+                        unitController.isCelsius,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

@@ -5,16 +5,18 @@ import 'package:weather_app/data/models/forecast_model.dart';
 import 'package:weather_app/domain/entities/weather_entity.dart';
 
 abstract class WeatherRepository {
-  Future<WeatherEntity> getWeatherByCity(String city);
+  Future<WeatherEntity> getWeatherByCity(String city, {String units = 'metric'});
   Future<WeatherEntity> getWeatherByCoordinates(
     double latitude,
-    double longitude,
-  );
-  Future<ForecastModel> getForecastByCity(String city);
+    double longitude, {
+    String units = 'metric',
+  });
+  Future<ForecastModel> getForecastByCity(String city, {String units = 'metric'});
   Future<ForecastModel> getForecastByCoordinates(
     double latitude,
-    double longitude,
-  );
+    double longitude, {
+    String units = 'metric',
+  });
 }
 
 class WeatherRepositoryImpl implements WeatherRepository {
@@ -23,10 +25,16 @@ class WeatherRepositoryImpl implements WeatherRepository {
   WeatherRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<WeatherEntity> getWeatherByCity(String city) async {
-    logger.d('Repository: getting weather for $city');
+  Future<WeatherEntity> getWeatherByCity(
+    String city, {
+    String units = 'metric',
+  }) async {
+    logger.d('Repository: getting weather for $city with units: $units');
     try {
-      final weatherModel = await remoteDataSource.getWeatherByCity(city);
+      final weatherModel = await remoteDataSource.getWeatherByCity(
+        city,
+        units: units,
+      );
       logger.i('Successfully retrieved weather for $city');
       return _modelToEntity(weatherModel);
     } catch (e) {
@@ -38,12 +46,14 @@ class WeatherRepositoryImpl implements WeatherRepository {
   @override
   Future<WeatherEntity> getWeatherByCoordinates(
     double latitude,
-    double longitude,
-  ) async {
+    double longitude, {
+    String units = 'metric',
+  }) async {
     try {
       final weatherModel = await remoteDataSource.getWeatherByCoordinates(
         latitude,
         longitude,
+        units: units,
       );
       return _modelToEntity(weatherModel);
     } catch (e) {
@@ -52,10 +62,16 @@ class WeatherRepositoryImpl implements WeatherRepository {
   }
 
   @override
-  Future<ForecastModel> getForecastByCity(String city) async {
-    logger.d('Repository: getting forecast for $city');
+  Future<ForecastModel> getForecastByCity(
+    String city, {
+    String units = 'metric',
+  }) async {
+    logger.d('Repository: getting forecast for $city with units: $units');
     try {
-      final forecastModel = await remoteDataSource.getForecastByCity(city);
+      final forecastModel = await remoteDataSource.getForecastByCity(
+        city,
+        units: units,
+      );
       logger.i('Successfully retrieved forecast for $city');
       return forecastModel;
     } catch (e) {
@@ -67,12 +83,14 @@ class WeatherRepositoryImpl implements WeatherRepository {
   @override
   Future<ForecastModel> getForecastByCoordinates(
     double latitude,
-    double longitude,
-  ) async {
+    double longitude, {
+    String units = 'metric',
+  }) async {
     try {
       final forecastModel = await remoteDataSource.getForecastByCoordinates(
         latitude,
         longitude,
+        units: units,
       );
       return forecastModel;
     } catch (e) {

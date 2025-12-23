@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/core/utils/logger.dart';
 import 'package:weather_app/presentation/controllers/weather_controller.dart';
+import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
 import 'package:weather_app/presentation/widgets/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_app/domain/entities/weather_entity.dart';
@@ -21,11 +22,25 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
   bool _isLoadingWeather = false;
   bool _isEditMode = false;
   static const String _savedCitiesKey = 'saved_cities';
+  String? _lastUnit;
 
   @override
   void initState() {
     super.initState();
     _loadSavedCities();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // Check if unit has changed
+    final currentUnit = context.watch<TemperatureUnitController>().unit;
+    if (_lastUnit != null && _lastUnit != currentUnit && _savedCities.isNotEmpty) {
+      logger.d('ManageCities: Unit changed from $_lastUnit to $currentUnit, refreshing cities');
+      _fetchWeatherForCities();
+    }
+    _lastUnit = currentUnit;
   }
 
   @override
@@ -66,10 +81,11 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
     });
 
     final useCase = context.read<WeatherController>().getWeatherUseCase;
+    final units = context.read<TemperatureUnitController>().unit;
 
     for (final city in _savedCities) {
       try {
-        final weather = await useCase.call(city);
+        final weather = await useCase.call(city, units: units);
         if (mounted) {
           setState(() {
             _citiesWeather[city] = weather;
@@ -89,8 +105,9 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
 
   Future<void> _fetchWeatherForCity(String cityName) async {
     final useCase = context.read<WeatherController>().getWeatherUseCase;
+    final units = context.read<TemperatureUnitController>().unit;
     try {
-      final weather = await useCase.call(cityName);
+      final weather = await useCase.call(cityName, units: units);
       if (mounted) {
         setState(() {
           _citiesWeather[cityName] = weather;
@@ -102,7 +119,8 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
   }
 
   void _selectCity(String cityName) {
-    context.read<WeatherController>().fetchWeatherByCity(cityName);
+    final units = context.read<TemperatureUnitController>().unit;
+    context.read<WeatherController>().fetchWeatherByCity(cityName, units: units);
     Navigator.pop(context);
   }
 
@@ -185,7 +203,8 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
   }
 
   void _showCityWeatherSheet(String cityName) {
-    context.read<WeatherController>().fetchWeatherByCity(cityName);
+    final units = context.read<TemperatureUnitController>().unit;
+    context.read<WeatherController>().fetchWeatherByCity(cityName, units: units);
 
     showModalBottomSheet(
       context: context,
