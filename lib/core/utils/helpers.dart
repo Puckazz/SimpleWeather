@@ -64,6 +64,7 @@ class Helpers {
       case 'snow':
         return '❄️';
       case 'mist':
+        return '🌫️';
       case 'fog':
       case 'haze':
         return '🌫️';

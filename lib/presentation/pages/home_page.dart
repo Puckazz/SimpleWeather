@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/presentation/controllers/weather_controller.dart';
+import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
 import 'package:weather_app/presentation/pages/settings_page.dart';
 import 'package:weather_app/presentation/pages/manage_cities_page.dart';
+import 'package:weather_app/presentation/pages/hourly_forecast_page.dart';
 import 'package:weather_app/presentation/widgets/widgets.dart';
 
 class HomePage extends StatefulWidget {
@@ -19,7 +21,11 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     // Load default city on startup
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WeatherController>().fetchWeatherByCity('San Francisco');
+      final unitController = context.read<TemperatureUnitController>();
+      context.read<WeatherController>().fetchWeatherByCity(
+        'San Francisco',
+        units: unitController.unit,
+      );
     });
   }
 
@@ -93,8 +99,10 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
+              final unitController = context.read<TemperatureUnitController>();
               context.read<WeatherController>().fetchWeatherByCity(
                 'San Francisco',
+                units: unitController.unit,
               );
             },
             child: const Text('Retry'),
@@ -196,21 +204,31 @@ class _HomePageState extends State<HomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Hourly Forecast',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            TextButton(
-              onPressed: () {},
-              child: const Text(
-                'See All',
-                style: TextStyle(fontSize: 16, color: Colors.blue),
+        Padding(
+          padding: const EdgeInsets.only(right: 20.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Hourly Forecast',
+                style: Theme.of(context).textTheme.headlineSmall,
               ),
-            ),
-          ],
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HourlyForecastPage(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  'See All',
+                  style: TextStyle(fontSize: 16, color: Colors.blue),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -218,6 +236,7 @@ class _HomePageState extends State<HomePage> {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: hourlyData.length,
+            padding: const EdgeInsets.only(right: 20.0), // Thêm padding bên phải
             itemBuilder: (context, index) {
               final isFirst = index == 0;
 

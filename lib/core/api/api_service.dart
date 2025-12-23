@@ -13,11 +13,17 @@ class ApiService {
   ApiService({http.Client? client}) : client = client ?? http.Client();
 
   /// Fetch weather data by city name
-  Future<Map<String, dynamic>> getWeatherByCity(String city) async {
+  Future<Map<String, dynamic>> getWeatherByCity(
+    String city, {
+    String units = 'metric',
+  }) async {
     try {
       final url = Uri.parse(
-        '$baseUrl/weather?q=$city&appid=$apiKey&units=metric',
+        '$baseUrl/weather?q=$city&appid=$apiKey&units=$units',
       );
+      
+      logger.d('API: Fetching weather for $city with units=$units');
+      logger.d('API URL: $url');
 
       final response = await client
           .get(url)
@@ -41,11 +47,12 @@ class ApiService {
   /// Fetch weather data by coordinates
   Future<Map<String, dynamic>> getWeatherByCoordinates(
     double latitude,
-    double longitude,
-  ) async {
+    double longitude, {
+    String units = 'metric',
+  }) async {
     try {
       final url = Uri.parse(
-        '$baseUrl/weather?lat=$latitude&lon=$longitude&appid=$apiKey&units=metric',
+        '$baseUrl/weather?lat=$latitude&lon=$longitude&appid=$apiKey&units=$units',
       );
 
       final response = await client
@@ -96,11 +103,17 @@ class ApiService {
   }
 
   /// Fetch 5-day / 3-hour forecast data by city name
-  Future<Map<String, dynamic>> getForecastByCity(String city) async {
+  Future<Map<String, dynamic>> getForecastByCity(
+    String city, {
+    String units = 'metric',
+  }) async {
     try {
       final url = Uri.parse(
-        '$baseUrl/forecast?q=$city&appid=$apiKey&units=metric',
+        '$baseUrl/forecast?q=$city&appid=$apiKey&units=$units',
       );
+      
+      // logger
+      logger.d('API: Fetching forecast for $city with units=$units');
 
       final response = await client
           .get(url)
@@ -124,11 +137,12 @@ class ApiService {
   /// Fetch 5-day / 3-hour forecast data by coordinates
   Future<Map<String, dynamic>> getForecastByCoordinates(
     double latitude,
-    double longitude,
-  ) async {
+    double longitude, {
+    String units = 'metric',
+  }) async {
     try {
       final url = Uri.parse(
-        '$baseUrl/forecast?lat=$latitude&lon=$longitude&appid=$apiKey&units=metric',
+        '$baseUrl/forecast?lat=$latitude&lon=$longitude&appid=$apiKey&units=$units',
       );
 
       final response = await client
