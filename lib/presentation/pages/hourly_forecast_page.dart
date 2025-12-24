@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:weather_app/presentation/controllers/weather_controller.dart';
@@ -36,7 +35,9 @@ class HourlyForecastPage extends StatelessWidget {
 
                   final hourlyData = controller.hourlyForecast;
                   if (hourlyData.isEmpty) {
-                    return const Center(child: Text('No forecast data available'));
+                    return const Center(
+                      child: Text('No forecast data available'),
+                    );
                   }
 
                   return _buildForecastList(context, hourlyData);
@@ -51,7 +52,7 @@ class HourlyForecastPage extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     final weatherController = context.watch<WeatherController>();
-    final cityName = weatherController.weather?.name ?? 'Unknown';
+    final cityName = weatherController.displayName;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -113,17 +114,20 @@ class HourlyForecastPage extends StatelessWidget {
     );
   }
 
-  Widget _buildForecastList(BuildContext context, List<ForecastItem> hourlyData) {
+  Widget _buildForecastList(
+    BuildContext context,
+    List<ForecastItem> hourlyData,
+  ) {
     final now = DateTime.now();
     final unitController = context.watch<TemperatureUnitController>();
 
     // Group by day
     final Map<String, List<ForecastItem>> groupedByDay = {};
-    
+
     for (final item in hourlyData) {
       final date = item.dateTimeAsDateTime;
       final dayKey = DateFormat('yyyy-MM-dd').format(date);
-      
+
       if (!groupedByDay.containsKey(dayKey)) {
         groupedByDay[dayKey] = [];
       }
@@ -135,13 +139,15 @@ class HourlyForecastPage extends StatelessWidget {
       children: [
         ...groupedByDay.entries.map((entry) {
           final date = DateTime.parse(entry.key);
-          final isToday = date.day == now.day && 
-                         date.month == now.month && 
-                         date.year == now.year;
-          final isTomorrow = date.day == now.add(const Duration(days: 1)).day && 
-                            date.month == now.add(const Duration(days: 1)).month && 
-                            date.year == now.add(const Duration(days: 1)).year;
-          
+          final isToday =
+              date.day == now.day &&
+              date.month == now.month &&
+              date.year == now.year;
+          final isTomorrow =
+              date.day == now.add(const Duration(days: 1)).day &&
+              date.month == now.add(const Duration(days: 1)).month &&
+              date.year == now.add(const Duration(days: 1)).year;
+
           String dayLabel;
           if (isToday) {
             dayLabel = 'Today';
@@ -170,17 +176,17 @@ class HourlyForecastPage extends StatelessWidget {
                 final index = indexedItem.key;
                 final item = indexedItem.value;
                 final isFirst = index == 0 && isToday;
-                
+
                 return _buildHourlyCard(
                   context,
                   item,
                   isFirst,
                   unitController.unitSymbol,
                 );
-              }).toList(),
+              }),
             ],
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -193,7 +199,7 @@ class HourlyForecastPage extends StatelessWidget {
   ) {
     final time = item.dateTimeAsDateTime;
     final timeString = isNow ? 'Now' : DateFormat('h a').format(time);
-    
+
     final weatherIcon = WeatherHelpers.getWeatherIcon(item.main, item.icon);
     final iconColor = WeatherHelpers.getWeatherColor(item.main, item.icon);
     final conditionText = WeatherHelpers.getConditionText(item.main, item.icon);
@@ -208,7 +214,8 @@ class HourlyForecastPage extends StatelessWidget {
     } else if (item.humidity > 70) {
       additionalInfo = 'Humidity ${item.humidity}%';
     } else {
-      additionalInfo = 'UV Index ${(item.cloudiness / 20).clamp(1, 10).toInt()}';
+      additionalInfo =
+          'UV Index ${(item.cloudiness / 20).clamp(1, 10).toInt()}';
     }
 
     return Container(
@@ -222,20 +229,20 @@ class HourlyForecastPage extends StatelessWidget {
                 end: Alignment.bottomRight,
               )
             : null,
-        color: isNow ? null : Theme.of(context).cardColor.withOpacity(0.7),
+        color: isNow ? null : Theme.of(context).cardColor.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isNow
               ? Colors.transparent
-              : Theme.of(context).dividerColor.withOpacity(0.5),
+              : Theme.of(context).dividerColor.withValues(alpha: 0.5),
         ),
         boxShadow: isNow
             ? [
                 BoxShadow(
-                  color: const Color(0xFF2b8cee).withOpacity(0.3),
+                  color: const Color(0xFF2b8cee).withValues(alpha: 0.3),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
-                )
+                ),
               ]
             : null,
       ),
@@ -278,10 +285,10 @@ class HourlyForecastPage extends StatelessWidget {
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: isNow
-                        ? Colors.white.withOpacity(0.9)
+                        ? Colors.white.withValues(alpha: 0.9)
                         : (item.rain3h != null && item.rain3h! > 0
-                            ? Colors.blue
-                            : Theme.of(context).textTheme.bodyMedium!.color),
+                              ? Colors.blue
+                              : Theme.of(context).textTheme.bodyMedium!.color),
                   ),
                 ),
               ],
@@ -289,15 +296,11 @@ class HourlyForecastPage extends StatelessWidget {
           ),
           const SizedBox(width: 16),
           // Icon
-          Icon(
-            weatherIcon,
-            color: isNow ? Colors.white : iconColor,
-            size: 28,
-          ),
+          Icon(weatherIcon, color: isNow ? Colors.white : iconColor, size: 28),
           const SizedBox(width: 16),
           // Temperature
           SizedBox(
-            width: 32,
+            width: 44,
             child: Text(
               '${item.temperature.toInt()}$unitSymbol',
               textAlign: TextAlign.right,

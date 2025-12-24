@@ -1,8 +1,35 @@
 import 'package:intl/intl.dart';
 
 class Helpers {
+  /// Convert Celsius to Fahrenheit
+  static double celsiusToFahrenheit(double celsius) {
+    return (celsius * 9 / 5) + 32;
+  }
+
+  /// Convert Fahrenheit to Celsius
+  static double fahrenheitToCelsius(double fahrenheit) {
+    return (fahrenheit - 32) * 5 / 9;
+  }
+
+  /// Format temperature with unit conversion
+  static String formatTemperature(
+    double temperature, {
+    bool isFahrenheit = false,
+  }) {
+    if (isFahrenheit) {
+      final fahrenheit = celsiusToFahrenheit(temperature);
+      return '${fahrenheit.toStringAsFixed(1)}°F';
+    }
+    return '${temperature.toStringAsFixed(1)}°C';
+  }
+
+  /// Get temperature value with conversion (without symbol)
+  static double getTemperature(double celsius, {bool isFahrenheit = false}) {
+    return isFahrenheit ? celsiusToFahrenheit(celsius) : celsius;
+  }
+
   /// Format temperature
-  static String formatTemperature(double temperature) {
+  static String formatTemperatureSimple(double temperature) {
     return '${temperature.toStringAsFixed(1)}°C';
   }
 

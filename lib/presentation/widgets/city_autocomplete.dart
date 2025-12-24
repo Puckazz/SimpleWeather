@@ -5,13 +5,15 @@ import 'package:weather_app/core/utils/logger.dart';
 import 'dart:async';
 
 class CityAutocomplete extends StatefulWidget {
-  final Function(String) onCitySelected;
+  final Function(String cityName, double lat, double lon) onCitySelected;
   final TextEditingController controller;
+  final ApiService? apiService;
 
   const CityAutocomplete({
     super.key,
     required this.onCitySelected,
     required this.controller,
+    this.apiService,
   });
 
   @override
@@ -19,7 +21,7 @@ class CityAutocomplete extends StatefulWidget {
 }
 
 class _CityAutocompleteState extends State<CityAutocomplete> {
-  final ApiService _apiService = ApiService();
+  late final ApiService _apiService;
   List<Map<String, dynamic>> _suggestions = [];
   bool _showSuggestions = false;
   bool _isSearching = false;
@@ -30,6 +32,7 @@ class _CityAutocompleteState extends State<CityAutocomplete> {
   @override
   void initState() {
     super.initState();
+    _apiService = widget.apiService ?? ApiService();
     widget.controller.addListener(_onSearchChanged);
   }
 
@@ -76,8 +79,9 @@ class _CityAutocompleteState extends State<CityAutocomplete> {
 
     try {
       final results = await _apiService.searchCities(query, limit: 10);
+
       if (results.isNotEmpty) {
-        logger.i('Found ${results.length} city suggestions for: $query');
+        logger.i('Found ${results.length} location suggestions for: $query');
       }
       if (mounted) {
         setState(() {
@@ -131,7 +135,9 @@ class _CityAutocompleteState extends State<CityAutocomplete> {
                   itemCount: _suggestions.length,
                   separatorBuilder: (context, index) => Divider(
                     height: 1,
-                    color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
+                    color: Theme.of(
+                      context,
+                    ).dividerColor.withValues(alpha: 0.3),
                     indent: 16,
                     endIndent: 16,
                   ),
@@ -182,8 +188,10 @@ class _CityAutocompleteState extends State<CityAutocomplete> {
   void _selectCity(Map<String, dynamic> cityData) {
     final cityName = cityData['name'] as String? ?? '';
     final country = cityData['country'] as String? ?? '';
+    final lat = (cityData['lat'] as num?)?.toDouble() ?? 0.0;
+    final lon = (cityData['lon'] as num?)?.toDouble() ?? 0.0;
 
-    logger.i('Selected city: $cityName, $country');
+    logger.i('Selected location: $cityName, $country (lat: $lat, lon: $lon)');
     widget.controller.text = '$cityName, $country';
     setState(() {
       _showSuggestions = false;
@@ -191,7 +199,7 @@ class _CityAutocompleteState extends State<CityAutocomplete> {
     });
     _removeOverlay();
 
-    widget.onCitySelected(cityName);
+    widget.onCitySelected(cityName, lat, lon);
   }
 
   @override

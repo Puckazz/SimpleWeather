@@ -14,6 +14,7 @@ class WeatherController extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   String _currentCity = '';
+  String? _displayName;
 
   // Getters
   WeatherEntity? get weather => _weather;
@@ -23,18 +24,25 @@ class WeatherController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get currentCity => _currentCity;
+  String get displayName => _displayName ?? _weather?.name ?? _currentCity;
 
-  /// Fetch weather by city name
-  Future<void> fetchWeatherByCity(String city, {String units = 'metric'}) async {
-    logger.d('Controller: fetching weather for $city with units: $units');
+  /// Fetch weather by city name (always fetch in metric/Celsius)
+  Future<void> fetchWeatherByCity(
+    String city, {
+    String units = 'metric',
+  }) async {
+    logger.d(
+      'Controller: fetching weather for $city (always using metric for storage)',
+    );
     _currentCity = city;
+    _displayName = city;
     _setLoading(true);
     _error = null;
     try {
-      // Fetch both weather and forecast in parallel
+      // Always fetch with metric (Celsius) for consistent storage
       final results = await Future.wait([
-        getWeatherUseCase.call(city, units: units),
-        getWeatherUseCase.getForecastByCity(city, units: units),
+        getWeatherUseCase.call(city, units: 'metric'),
+        getWeatherUseCase.getForecastByCity(city, units: 'metric'),
       ]);
 
       _weather = results[0] as WeatherEntity;
@@ -55,22 +63,28 @@ class WeatherController extends ChangeNotifier {
     }
   }
 
-  /// Fetch weather by coordinates
+  /// Fetch weather by coordinates (always fetch in metric/Celsius)
   Future<void> fetchWeatherByCoordinates(
     double latitude,
     double longitude, {
+    String? displayName,
     String units = 'metric',
   }) async {
+    _displayName = displayName;
     _setLoading(true);
     _error = null;
     try {
-      // Fetch both weather and forecast in parallel
+      // Always fetch with metric (Celsius) for consistent storage
       final results = await Future.wait([
-        getWeatherUseCase.callByCoordinates(latitude, longitude, units: units),
+        getWeatherUseCase.callByCoordinates(
+          latitude,
+          longitude,
+          units: 'metric',
+        ),
         getWeatherUseCase.getForecastByCoordinates(
           latitude,
           longitude,
-          units: units,
+          units: 'metric',
         ),
       ]);
 
@@ -89,18 +103,16 @@ class WeatherController extends ChangeNotifier {
     }
   }
 
-  /// Refresh weather data with new units
+  /// Refresh weather data (no longer needs units parameter)
+  /// Temperature conversion is now handled at display time
   Future<void> refreshWithUnits(String units) async {
-    logger.d('Controller: refreshWithUnits called with units=$units, currentCity=$_currentCity');
-    
-    // Check if we have weather data
-    if (_weather != null && _weather!.name.isNotEmpty) {
-      await fetchWeatherByCity(_weather!.name, units: units);
-    } else if (_currentCity.isNotEmpty) {
-      await fetchWeatherByCity(_currentCity, units: units);
-    } else {
-      logger.w('Controller: No city to refresh, skipping');
-    }
+    logger.d(
+      'Controller: refreshWithUnits called, but now just notifying listeners for UI update',
+    );
+
+    // Just notify listeners to update UI with new unit
+    // Data is always stored in Celsius, conversion happens at display
+    notifyListeners();
   }
 
   /// Set loading state

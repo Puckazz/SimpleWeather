@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/presentation/controllers/theme_controller.dart';
 import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
-import 'package:weather_app/presentation/controllers/weather_controller.dart';
 import 'package:weather_app/presentation/widgets/widgets.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -109,11 +108,7 @@ class SettingsPage extends StatelessWidget {
                     GestureDetector(
                       onTap: () async {
                         await unitController.setUnit(true); // Fahrenheit
-                        // Refresh weather data with new units
-                        if (context.mounted) {
-                          final weatherController = context.read<WeatherController>();
-                          await weatherController.refreshWithUnits('imperial');
-                        }
+                        // No need to refresh weather data, conversion happens at display time
                       },
                       child: _buildUnitButton(
                         context,
@@ -125,11 +120,7 @@ class SettingsPage extends StatelessWidget {
                     GestureDetector(
                       onTap: () async {
                         await unitController.setUnit(false); // Celsius
-                        // Refresh weather data with new units
-                        if (context.mounted) {
-                          final weatherController = context.read<WeatherController>();
-                          await weatherController.refreshWithUnits('metric');
-                        }
+                        // No need to refresh weather data, conversion happens at display time
                       },
                       child: _buildUnitButton(
                         context,

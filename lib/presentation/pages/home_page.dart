@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'package:weather_app/core/utils/helpers.dart';
 import 'package:weather_app/presentation/controllers/weather_controller.dart';
 import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
 import 'package:weather_app/presentation/pages/settings_page.dart';
@@ -45,7 +46,11 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
+                          padding: const EdgeInsets.only(
+                            top: 20.0,
+                            left: 20.0,
+                            right: 20.0,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -113,10 +118,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader(WeatherController controller) {
-    final weather = controller.weather;
-
     return WeatherHeader(
-      cityName: weather?.name ?? 'San Francisco',
+      cityName: controller.displayName,
       leadingIcon: Icon(
         Icons.menu_rounded,
         size: 28,
@@ -151,10 +154,10 @@ class _HomePageState extends State<HomePage> {
     return MainWeatherDisplay(
       icon: WeatherHelpers.getWeatherIcon(weather.main, weather.icon),
       iconColor: WeatherHelpers.getWeatherColor(weather.main, weather.icon),
-      temperature: weather.temperature.round(),
+      temperature: weather.temperature,
       condition: WeatherHelpers.getConditionText(weather.main, weather.icon),
-      tempMax: weather.tempMax.round(),
-      tempMin: weather.tempMin.round(),
+      tempMax: weather.tempMax,
+      tempMin: weather.tempMin,
     );
   }
 
@@ -231,59 +234,76 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: hourlyData.length,
-            padding: const EdgeInsets.only(right: 20.0), // Thêm padding bên phải
-            itemBuilder: (context, index) {
-              final isFirst = index == 0;
+        Consumer<TemperatureUnitController>(
+          builder: (context, unitController, _) {
+            final isFahrenheit = unitController.isFahrenheit;
+            final unitSymbol = unitController.unitSymbol;
 
-              String time;
-              IconData icon;
-              String temp;
-              Color iconColor;
+            return SizedBox(
+              height: 120,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: hourlyData.length,
+                padding: const EdgeInsets.only(
+                  right: 20.0,
+                ), // Thêm padding bên phải
+                itemBuilder: (context, index) {
+                  final isFirst = index == 0;
 
-              if (isFirst && currentWeather != null) {
-                time = 'Now';
-                icon = WeatherHelpers.getWeatherIcon(
-                  currentWeather.main,
-                  currentWeather.icon,
-                );
-                temp = '${currentWeather.temperature.round()}°';
-                iconColor = WeatherHelpers.getWeatherColor(
-                  currentWeather.main,
-                  currentWeather.icon,
-                );
-              } else {
-                final item = hourlyData[index];
-                final localTime = item.dateTimeAsDateTime.toUtc().add(
-                  Duration(seconds: timezoneOffset),
-                );
-                final hour = localTime.hour;
-                final period = hour >= 12 ? 'PM' : 'AM';
-                final displayHour = hour > 12
-                    ? hour - 12
-                    : (hour == 0 ? 12 : hour);
-                time = '$displayHour $period';
-                icon = WeatherHelpers.getWeatherIcon(item.main, item.icon);
-                temp = '${item.temperature.round()}°';
-                iconColor = WeatherHelpers.getWeatherColor(
-                  item.main,
-                  item.icon,
-                );
-              }
+                  String time;
+                  IconData icon;
+                  String temp;
+                  Color iconColor;
 
-              return HourlyForecastItem(
-                time: time,
-                icon: icon,
-                iconColor: iconColor,
-                temperature: temp,
-                isSelected: isFirst,
-              );
-            },
-          ),
+                  if (isFirst && currentWeather != null) {
+                    time = 'Now';
+                    icon = WeatherHelpers.getWeatherIcon(
+                      currentWeather.main,
+                      currentWeather.icon,
+                    );
+                    final displayTemp = Helpers.getTemperature(
+                      currentWeather.temperature,
+                      isFahrenheit: isFahrenheit,
+                    ).round();
+                    temp = '$displayTemp$unitSymbol';
+                    iconColor = WeatherHelpers.getWeatherColor(
+                      currentWeather.main,
+                      currentWeather.icon,
+                    );
+                  } else {
+                    final item = hourlyData[index];
+                    final localTime = item.dateTimeAsDateTime.toUtc().add(
+                      Duration(seconds: timezoneOffset),
+                    );
+                    final hour = localTime.hour;
+                    final period = hour >= 12 ? 'PM' : 'AM';
+                    final displayHour = hour > 12
+                        ? hour - 12
+                        : (hour == 0 ? 12 : hour);
+                    time = '$displayHour $period';
+                    icon = WeatherHelpers.getWeatherIcon(item.main, item.icon);
+                    final displayTemp = Helpers.getTemperature(
+                      item.temperature,
+                      isFahrenheit: isFahrenheit,
+                    ).round();
+                    temp = '$displayTemp$unitSymbol';
+                    iconColor = WeatherHelpers.getWeatherColor(
+                      item.main,
+                      item.icon,
+                    );
+                  }
+
+                  return HourlyForecastItem(
+                    time: time,
+                    icon: icon,
+                    iconColor: iconColor,
+                    temperature: temp,
+                    isSelected: isFirst,
+                  );
+                },
+              ),
+            );
+          },
         ),
       ],
     );
@@ -335,8 +355,8 @@ class _HomePageState extends State<HomePage> {
                 icon: WeatherHelpers.getWeatherIcon(day.main, day.icon),
                 iconColor: WeatherHelpers.getWeatherColor(day.main, day.icon),
                 condition: WeatherHelpers.getConditionText(day.main, day.icon),
-                tempMin: day.tempMin.round(),
-                tempMax: day.tempMax.round(),
+                tempMin: day.tempMin,
+                tempMax: day.tempMax,
               );
             },
           ),

@@ -17,30 +17,16 @@ class ManageCitiesPage extends StatefulWidget {
 
 class _ManageCitiesPageState extends State<ManageCitiesPage> {
   final TextEditingController _searchController = TextEditingController();
-  List<String> _savedCities = [];
+  List<Map<String, dynamic>> _savedLocations = [];
   final Map<String, WeatherEntity> _citiesWeather = {};
   bool _isLoadingWeather = false;
   bool _isEditMode = false;
-  static const String _savedCitiesKey = 'saved_cities';
-  String? _lastUnit;
+  static const String _savedLocationsKey = 'saved_locations_v2';
 
   @override
   void initState() {
     super.initState();
     _loadSavedCities();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    
-    // Check if unit has changed
-    final currentUnit = context.watch<TemperatureUnitController>().unit;
-    if (_lastUnit != null && _lastUnit != currentUnit && _savedCities.isNotEmpty) {
-      logger.d('ManageCities: Unit changed from $_lastUnit to $currentUnit, refreshing cities');
-      _fetchWeatherForCities();
-    }
-    _lastUnit = currentUnit;
   }
 
   @override
@@ -51,27 +37,59 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
 
   Future<void> _loadSavedCities() async {
     final prefs = await SharedPreferences.getInstance();
-    final cities =
-        prefs.getStringList(_savedCitiesKey) ??
-        ['New York', 'London', 'Tokyo', 'Sydney'];
-    setState(() {
-      _savedCities = cities;
-    });
+    final locationsJson = prefs.getStringList(_savedLocationsKey);
+
+    if (locationsJson != null) {
+      setState(() {
+        _savedLocations = locationsJson.map<Map<String, dynamic>>((json) {
+          final parts = json.split('|');
+          return <String, dynamic>{
+            'name': parts[0],
+            'lat': double.parse(parts[1]),
+            'lon': double.parse(parts[2]),
+          };
+        }).toList();
+      });
+    } else {
+      // Migrate old data or use defaults
+      setState(() {
+        _savedLocations = <Map<String, dynamic>>[
+          <String, dynamic>{
+            'name': 'New York',
+            'lat': 40.7128,
+            'lon': -74.0060,
+          },
+          <String, dynamic>{'name': 'London', 'lat': 51.5074, 'lon': -0.1278},
+          <String, dynamic>{'name': 'Tokyo', 'lat': 35.6762, 'lon': 139.6503},
+          <String, dynamic>{'name': 'Sydney', 'lat': -33.8688, 'lon': 151.2093},
+        ];
+      });
+      _saveCities();
+    }
     _fetchWeatherForCities();
   }
 
   Future<void> _saveCities() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_savedCitiesKey, _savedCities);
+    final locationsJson = _savedLocations.map((loc) {
+      return '${loc['name']}|${loc['lat']}|${loc['lon']}';
+    }).toList();
+    await prefs.setStringList(_savedLocationsKey, locationsJson);
   }
 
-  void _addCity(String cityName) {
-    if (!_savedCities.contains(cityName)) {
+  void _addCity(String cityName, double lat, double lon) {
+    final exists = _savedLocations.any((loc) => loc['name'] == cityName);
+    if (!exists) {
+      final newLocation = Map<String, dynamic>.from({
+        'name': cityName,
+        'lat': lat,
+        'lon': lon,
+      });
       setState(() {
-        _savedCities.insert(0, cityName);
+        _savedLocations.insert(0, newLocation);
       });
       _saveCities();
-      _fetchWeatherForCity(cityName);
+      _fetchWeatherForCity(cityName, lat, lon);
     }
   }
 
@@ -81,18 +99,25 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
     });
 
     final useCase = context.read<WeatherController>().getWeatherUseCase;
-    final units = context.read<TemperatureUnitController>().unit;
 
-    for (final city in _savedCities) {
+    for (final location in _savedLocations) {
+      final name = location['name'] as String;
+      final lat = location['lat'] as double;
+      final lon = location['lon'] as double;
+
       try {
-        final weather = await useCase.call(city, units: units);
+        final weather = await useCase.callByCoordinates(
+          lat,
+          lon,
+          units: 'metric',
+        );
         if (mounted) {
           setState(() {
-            _citiesWeather[city] = weather;
+            _citiesWeather[name] = weather;
           });
         }
       } catch (e) {
-        logger.e('Failed to fetch weather for $city: $e');
+        logger.e('Failed to fetch weather for $name: $e');
       }
     }
 
@@ -103,11 +128,18 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
     }
   }
 
-  Future<void> _fetchWeatherForCity(String cityName) async {
+  Future<void> _fetchWeatherForCity(
+    String cityName,
+    double lat,
+    double lon,
+  ) async {
     final useCase = context.read<WeatherController>().getWeatherUseCase;
-    final units = context.read<TemperatureUnitController>().unit;
     try {
-      final weather = await useCase.call(cityName, units: units);
+      final weather = await useCase.callByCoordinates(
+        lat,
+        lon,
+        units: 'metric',
+      );
       if (mounted) {
         setState(() {
           _citiesWeather[cityName] = weather;
@@ -119,14 +151,33 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
   }
 
   void _selectCity(String cityName) {
-    final units = context.read<TemperatureUnitController>().unit;
-    context.read<WeatherController>().fetchWeatherByCity(cityName, units: units);
-    Navigator.pop(context);
+    try {
+      final location = _savedLocations.firstWhere(
+        (loc) => loc['name'] == cityName,
+      );
+      final lat = (location['lat'] as num).toDouble();
+      final lon = (location['lon'] as num).toDouble();
+
+      context.read<WeatherController>().fetchWeatherByCoordinates(
+        lat,
+        lon,
+        displayName: cityName,
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      logger.e('Error selecting city: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error loading city data'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _deleteCity(String cityName) {
     setState(() {
-      _savedCities.remove(cityName);
+      _savedLocations.removeWhere((loc) => loc['name'] == cityName);
       _citiesWeather.remove(cityName);
     });
     _saveCities();
@@ -162,29 +213,36 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(
-              _isEditMode ? Icons.done : CupertinoIcons.pencil,
-              color: Theme.of(context).iconTheme.color,
+          Padding(
+            padding: const EdgeInsets.only(right: 10.0),
+            child: IconButton(
+              icon: Icon(
+                _isEditMode ? Icons.done : CupertinoIcons.pencil,
+                color: Theme.of(context).iconTheme.color,
+              ),
+              onPressed: _toggleEditMode,
             ),
-            onPressed: _toggleEditMode,
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSearchBar(),
-              const SizedBox(height: 32),
-              _buildCurrentLocation(),
-              const SizedBox(height: 32),
-              _buildSavedCities(),
-            ],
-          ),
-        ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSearchBar(),
+                  const SizedBox(height: 32),
+                  _buildCurrentLocation(),
+                  const SizedBox(height: 32),
+                  _buildSavedCities(constraints),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -192,26 +250,36 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
   Widget _buildSearchBar() {
     return CityAutocomplete(
       controller: _searchController,
-      onCitySelected: (cityName) {
+      onCitySelected: (cityName, lat, lon) {
         if (cityName.isNotEmpty) {
           // Clear search and hide suggestions before showing sheet
           _searchController.clear();
-          _showCityWeatherSheet(cityName);
+          _showCityWeatherSheet(cityName, lat, lon);
         }
       },
     );
   }
 
-  void _showCityWeatherSheet(String cityName) {
+  void _showCityWeatherSheet(String cityName, double lat, double lon) {
     final units = context.read<TemperatureUnitController>().unit;
-    context.read<WeatherController>().fetchWeatherByCity(cityName, units: units);
+    // Use coordinates instead of city name for accurate weather data
+    context.read<WeatherController>().fetchWeatherByCoordinates(
+      lat,
+      lon,
+      displayName: cityName,
+      units: units,
+    );
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) =>
-          _CityWeatherSheet(cityName: cityName, onAddCity: _addCity),
+      builder: (context) => _CityWeatherSheet(
+        cityName: cityName,
+        lat: lat,
+        lon: lon,
+        onAddCity: _addCity,
+      ),
     );
   }
 
@@ -247,16 +315,19 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
             }
 
             return CityCard(
-              cityName: weather.name,
+              cityName: controller.displayName,
               condition: weather.main,
               iconCode: weather.icon,
-              temperature: weather.temperature.round(),
-              tempHigh: weather.tempMax.round(),
-              tempLow: weather.tempMin.round(),
+              temperature: weather.temperature,
+              tempHigh: weather.tempMax,
+              tempLow: weather.tempMin,
               isCurrentLocation: true,
               onTap: () {
                 _searchController.clear();
-                _showCityWeatherSheet(weather.name);
+                // Use weather coordinates (from WeatherEntity)
+                // Note: WeatherEntity doesn't expose lat/lon directly
+                // So we need to fetch it again or just navigate back
+                Navigator.pop(context);
               },
             );
           },
@@ -265,7 +336,7 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
     );
   }
 
-  Widget _buildSavedCities() {
+  Widget _buildSavedCities(BoxConstraints constraints) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -282,7 +353,7 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
               ),
             ),
             Text(
-              '${_savedCities.length} SAVED',
+              '${_savedLocations.length} SAVED',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -300,15 +371,74 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
                   child: CircularProgressIndicator(),
                 ),
               )
+            : _savedLocations.isEmpty
+            ? ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 400,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 64,
+                      horizontal: 32,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).dividerColor.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          CupertinoIcons.location_slash,
+                          size: 64,
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium!.color!.withValues(alpha: 0.3),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No saved cities yet',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.headlineSmall!.color,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Search and add cities to see their weather',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium!.color,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
             : ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: _savedCities.length,
+                itemCount: _savedLocations.length,
                 separatorBuilder: (context, index) =>
                     const SizedBox(height: 16),
                 itemBuilder: (context, index) {
-                  final city = _savedCities[index];
-                  final weather = _citiesWeather[city];
+                  final location = _savedLocations[index];
+                  final cityName = location['name'] as String;
+                  final weather = _citiesWeather[cityName];
 
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
@@ -327,24 +457,26 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
                                     color: Colors.red,
                                     size: 28,
                                   ),
-                                  onPressed: () => _deleteCity(city),
+                                  onPressed: () => _deleteCity(cityName),
                                 )
                               : const SizedBox.shrink(),
                         ),
                         // City card with animation
                         Expanded(
                           child: CityCard(
-                            cityName: city,
+                            cityName: cityName,
                             condition: weather?.main ?? 'Loading',
                             iconCode: weather?.icon ?? '01d',
-                            temperature: weather?.temperature.round() ?? 0,
-                            tempHigh: weather?.tempMax.round() ?? 0,
-                            tempLow: weather?.tempMin.round() ?? 0,
+                            temperature: weather?.temperature ?? 0,
+                            tempHigh: weather?.tempMax ?? 0,
+                            tempLow: weather?.tempMin ?? 0,
                             isCurrentLocation: false,
                             localTime: weather != null
                                 ? WeatherHelpers.getLocalTime(weather.timezone)
                                 : null,
-                            onTap: _isEditMode ? null : () => _selectCity(city),
+                            onTap: _isEditMode
+                                ? null
+                                : () => _selectCity(cityName),
                           ),
                         ),
                       ],
@@ -360,9 +492,16 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
 /// Bottom sheet widget for displaying city weather details
 class _CityWeatherSheet extends StatelessWidget {
   final String cityName;
-  final Function(String) onAddCity;
+  final double lat;
+  final double lon;
+  final Function(String, double, double) onAddCity;
 
-  const _CityWeatherSheet({required this.cityName, required this.onAddCity});
+  const _CityWeatherSheet({
+    required this.cityName,
+    required this.lat,
+    required this.lon,
+    required this.onAddCity,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -438,7 +577,7 @@ class _CityWeatherSheet extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              onAddCity(cityName);
+              onAddCity(cityName, lat, lon);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -474,13 +613,13 @@ class _CityWeatherSheet extends StatelessWidget {
               weather.main,
               weather.icon,
             ),
-            temperature: weather.temperature.round(),
+            temperature: weather.temperature,
             condition: WeatherHelpers.getConditionText(
               weather.main,
               weather.icon,
             ),
-            tempMax: weather.tempMax.round(),
-            tempMin: weather.tempMin.round(),
+            tempMax: weather.tempMax,
+            tempMin: weather.tempMin,
           ),
           const SizedBox(height: 40),
           // Weather stats
