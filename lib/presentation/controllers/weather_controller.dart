@@ -70,7 +70,6 @@ class WeatherController extends ChangeNotifier {
     String? displayName,
     String units = 'metric',
   }) async {
-    _displayName = displayName;
     _setLoading(true);
     _error = null;
     try {
@@ -91,6 +90,9 @@ class WeatherController extends ChangeNotifier {
       _weather = results[0] as WeatherEntity;
       _forecast = results[1] as ForecastModel;
       _currentCity = _weather?.name ?? '';
+
+      // Use geocoding displayName (more accurate for location), fallback to API name
+      _displayName = displayName ?? _weather?.name;
 
       notifyListeners();
     } catch (e) {

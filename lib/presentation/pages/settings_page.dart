@@ -3,10 +3,38 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:weather_app/presentation/controllers/theme_controller.dart';
 import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
+import 'package:weather_app/presentation/controllers/location_controller.dart';
+import 'package:weather_app/presentation/controllers/weather_controller.dart';
 import 'package:weather_app/presentation/widgets/widgets.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Refresh permission when returning from system settings
+    if (state == AppLifecycleState.resumed) {
+      context.read<LocationController>().refreshPermissionStatus();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -175,15 +203,25 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
         const SettingsDivider(),
-        SettingsItem(
-          icon: CupertinoIcons.location_fill,
-          iconColor: Colors.green,
-          title: 'Location Access',
-          subtitle: 'While Using App',
-          trailing: Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: Theme.of(context).textTheme.bodyMedium!.color,
+        Consumer<LocationController>(
+          builder: (context, locationController, _) => SettingsItem(
+            icon: CupertinoIcons.location_fill,
+            iconColor: Colors.green,
+            title: 'Location Access',
+            subtitle: locationController.isLocationEnabled
+                ? 'Enabled'
+                : 'Disabled',
+            trailing: CupertinoSwitch(
+              value: locationController.isLocationEnabled,
+              onChanged: (value) async {
+                final enabled = await locationController.toggleLocationAccess();
+                if (enabled && context.mounted) {
+                  // Auto-fetch weather for current location
+                  _fetchCurrentLocationWeather();
+                }
+              },
+              activeTrackColor: Colors.blue,
+            ),
           ),
         ),
         const SettingsDivider(),
@@ -203,6 +241,23 @@ class SettingsPage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _fetchCurrentLocationWeather() async {
+    final locationController = context.read<LocationController>();
+    final weatherController = context.read<WeatherController>();
+    final unitController = context.read<TemperatureUnitController>();
+
+    final location = await locationController.getCurrentLocation();
+
+    if (location != null) {
+      await weatherController.fetchWeatherByCoordinates(
+        location.latitude,
+        location.longitude,
+        displayName: location.displayName,
+        units: unitController.unit,
+      );
+    }
   }
 
   Widget _buildLegalCard(BuildContext context) {

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:weather_app/core/utils/helpers.dart';
 import 'package:weather_app/presentation/controllers/weather_controller.dart';
 import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
+import 'package:weather_app/presentation/controllers/location_controller.dart';
 import 'package:weather_app/presentation/pages/settings_page.dart';
 import 'package:weather_app/presentation/pages/manage_cities_page.dart';
 import 'package:weather_app/presentation/pages/hourly_forecast_page.dart';
@@ -16,18 +17,60 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    // Load default city on startup
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final unitController = context.read<TemperatureUnitController>();
-      context.read<WeatherController>().fetchWeatherByCity(
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Refresh permission when returning from settings
+    if (state == AppLifecycleState.resumed) {
+      _checkAndRefreshLocation();
+    }
+  }
+
+  Future<void> _checkAndRefreshLocation() async {
+    final locationController = context.read<LocationController>();
+    final wasEnabled = locationController.isLocationEnabled;
+
+    await locationController.refreshPermissionStatus();
+
+    // If location was just enabled, fetch weather for current location
+    if (!wasEnabled && locationController.isLocationEnabled) {
+      await _fetchCurrentLocationWeather();
+    }
+  }
+
+  Future<void> _fetchCurrentLocationWeather() async {
+    final locationController = context.read<LocationController>();
+    final weatherController = context.read<WeatherController>();
+    final unitController = context.read<TemperatureUnitController>();
+
+    final location = await locationController.getCurrentLocation();
+
+    if (location != null) {
+      await weatherController.fetchWeatherByCoordinates(
+        location.latitude,
+        location.longitude,
+        displayName: location.displayName,
+        units: unitController.unit,
+      );
+    } else {
+      // Fallback to default city
+      await weatherController.fetchWeatherByCity(
         'San Francisco',
         units: unitController.unit,
       );
-    });
+    }
   }
 
   @override
@@ -41,52 +84,87 @@ class _HomePageState extends State<HomePage> {
                 ? const Center(child: CircularProgressIndicator())
                 : controller.error != null
                 ? _buildErrorState(controller.error!)
-                : SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            top: 20.0,
-                            left: 20.0,
-                            right: 20.0,
+                : RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              top: 20.0,
+                              left: 20.0,
+                              right: 20.0,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildHeader(controller),
+                                const SizedBox(height: 40),
+                                _buildMainWeather(controller),
+                                const SizedBox(height: 40),
+                                _buildWeatherStats(controller),
+                                const SizedBox(height: 40),
+                              ],
+                            ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildHeader(controller),
-                              const SizedBox(height: 40),
-                              _buildMainWeather(controller),
-                              const SizedBox(height: 40),
-                              _buildWeatherStats(controller),
-                              const SizedBox(height: 40),
-                            ],
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [_buildHourlyForecast(controller)],
+                            ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [_buildHourlyForecast(controller)],
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 40),
+                                _buildNext7Days(controller),
+                              ],
+                            ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 40),
-                              _buildNext7Days(controller),
-                            ],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
           ),
         );
       },
     );
+  }
+
+  Future<void> _onRefresh() async {
+    final locationController = context.read<LocationController>();
+    final weatherController = context.read<WeatherController>();
+    final unitController = context.read<TemperatureUnitController>();
+
+    // If location is enabled, try to refresh with current location
+    if (locationController.isLocationEnabled) {
+      final location = await locationController.getCurrentLocation();
+      if (location != null) {
+        await weatherController.fetchWeatherByCoordinates(
+          location.latitude,
+          location.longitude,
+          displayName: location.displayName,
+          units: unitController.unit,
+        );
+        return;
+      }
+    }
+
+    // Otherwise refresh current city
+    final currentCity = weatherController.currentCity;
+    if (currentCity.isNotEmpty) {
+      await weatherController.fetchWeatherByCity(
+        currentCity,
+        units: unitController.unit,
+      );
+    }
   }
 
   Widget _buildErrorState(String error) {

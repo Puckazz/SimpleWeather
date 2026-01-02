@@ -30,15 +30,21 @@ class WeatherHeader extends StatelessWidget {
           IconButton(icon: leadingIcon!, onPressed: onLeadingPressed)
         else
           const SizedBox(width: 48),
-        Column(
-          children: [
-            Text(cityName, style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 4),
-            Text(
-              dateFormat.format(now),
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
+        Expanded(
+          child: Column(
+            children: [
+              Text(
+                cityName,
+                style: Theme.of(context).textTheme.headlineSmall,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                dateFormat.format(now),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
         ),
         if (trailingIcon != null)
           IconButton(icon: trailingIcon!, onPressed: onTrailingPressed)

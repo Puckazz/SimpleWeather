@@ -21,7 +21,7 @@ class ApiService {
       final url = Uri.parse(
         '$baseUrl/weather?q=$city&appid=$apiKey&units=$units',
       );
-      
+
       logger.d('API: Fetching weather for $city with units=$units');
       logger.d('API URL: $url');
 
@@ -111,7 +111,7 @@ class ApiService {
       final url = Uri.parse(
         '$baseUrl/forecast?q=$city&appid=$apiKey&units=$units',
       );
-      
+
       // logger
       logger.d('API: Fetching forecast for $city with units=$units');
 
@@ -159,6 +159,44 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Error: $e');
+    }
+  }
+
+  /// Reverse geocoding: Get location name from coordinates
+  Future<Map<String, dynamic>?> reverseGeocode(
+    double latitude,
+    double longitude, {
+    int limit = 1,
+  }) async {
+    try {
+      final url = Uri.parse(
+        '$geoUrl/reverse?lat=$latitude&lon=$longitude&limit=$limit&appid=$apiKey',
+      );
+
+      logger.d('API: Reverse geocoding for $latitude, $longitude');
+
+      final response = await client
+          .get(url)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('Request timeout'),
+          );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> results = jsonDecode(response.body);
+        if (results.isNotEmpty) {
+          return results.first as Map<String, dynamic>;
+        }
+        return null;
+      } else {
+        logger.w(
+          'Reverse geocoding failed with status: ${response.statusCode}',
+        );
+        return null;
+      }
+    } catch (e) {
+      logger.e('Error in reverse geocoding: $e');
+      return null;
     }
   }
 }

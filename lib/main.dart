@@ -9,20 +9,39 @@ import 'package:weather_app/data/repositories/weather_repository_impl.dart';
 import 'package:weather_app/domain/usecases/get_weather.dart';
 import 'package:weather_app/presentation/controllers/weather_controller.dart';
 import 'package:weather_app/presentation/controllers/theme_controller.dart';
-import 'package:weather_app/presentation/pages/home_page.dart';
-import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart'; 
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:weather_app/presentation/controllers/location_controller.dart';
+import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'dart:io' show Platform;
+import 'package:weather_app/presentation/pages/splash_screen.dart';
 
 void main() {
   AppConfig.validate();
+
+  // Only use DevicePreview on emulator/simulator in debug mode
+  final useDevicePreview = kDebugMode && !_isPhysicalDevice();
+
   runApp(
-    kDebugMode // Check if running in debug mode
-        ? DevicePreview(
-            enabled: true, // You can also use kDebugMode here for clarity
-            builder: (context) => const MyApp(),
-          )
+    useDevicePreview
+        ? DevicePreview(enabled: true, builder: (context) => const MyApp())
         : const MyApp(),
-  );}
+  );
+}
+
+bool _isPhysicalDevice() {
+  if (kIsWeb) return false;
+
+  try {
+    // Simple check - on emulator, these environment checks typically differ
+    // For more precise detection, you could check specific emulator properties
+    final isEmulator =
+        Platform.environment.containsKey('FLUTTER_TEST') ||
+        Platform.environment.containsKey('ANDROID_EMULATOR');
+    return !isEmulator;
+  } catch (e) {
+    return false;
+  }
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -40,6 +59,17 @@ class MyApp extends StatelessWidget {
         ),
         // API Service
         Provider<ApiService>(create: (_) => ApiService()),
+        // Location Controller with ApiService dependency
+        ChangeNotifierProxyProvider<ApiService, LocationController>(
+          create: (_) => LocationController(),
+          update: (_, apiService, previous) {
+            if (previous != null) {
+              previous.updateApiService(apiService);
+              return previous;
+            }
+            return LocationController(apiService: apiService);
+          },
+        ),
         // Remote Data Source
         ProxyProvider<ApiService, WeatherRemoteDataSource>(
           update: (_, apiService, _) =>
@@ -72,9 +102,13 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeController.themeMode,
-            locale: DevicePreview.locale(context),
-            builder: DevicePreview.appBuilder,
-            home: const HomePage(),
+            locale: kDebugMode && !_isPhysicalDevice()
+                ? DevicePreview.locale(context)
+                : null,
+            builder: kDebugMode && !_isPhysicalDevice()
+                ? DevicePreview.appBuilder
+                : null,
+            home: const SplashScreen(),
           );
         },
       ),
