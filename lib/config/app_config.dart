@@ -1,8 +1,9 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class AppConfig {
-  static const String weatherApiKey = String.fromEnvironment(
-    'WEATHER_API_KEY',
-    defaultValue: '',
-  );
+  static String get weatherApiKey => dotenv.env['WEATHER_API_KEY'] ?? '';
+  static String get environment => dotenv.env['ENV'] ?? 'dev';
+
 
   static const String env = String.fromEnvironment(
     'ENV',
@@ -11,10 +12,9 @@ class AppConfig {
 
   static void validate() {
     if (weatherApiKey.isEmpty) {
-      throw Exception(
-        '❌ WEATHER_API_KEY is missing.\n'
-        'Run app using script or --dart-define.',
-      );
+      throw Exception('WEATHER_API_KEY is not set in .env.local file');
     }
+    print('✅ Environment: $environment');
+    print('✅ API Key loaded: ${weatherApiKey.substring(0, 8)}...');
   }
 }

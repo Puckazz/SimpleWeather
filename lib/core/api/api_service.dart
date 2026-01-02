@@ -6,7 +6,7 @@ import 'package:weather_app/core/utils/logger.dart';
 class ApiService {
   static const String baseUrl = 'https://api.openweathermap.org/data/2.5';
   static const String geoUrl = 'https://api.openweathermap.org/geo/1.0';
-  static const String apiKey = AppConfig.weatherApiKey;
+  static final String apiKey = AppConfig.weatherApiKey;
 
   final http.Client client;
 

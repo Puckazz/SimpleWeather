@@ -12,8 +12,10 @@ import 'package:weather_app/presentation/controllers/theme_controller.dart';
 import 'package:weather_app/presentation/pages/home_page.dart';
 import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart'; 
 import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+void main() async {
+  await dotenv.load(fileName: ".env.local");
   AppConfig.validate();
   runApp(
     kDebugMode // Check if running in debug mode
