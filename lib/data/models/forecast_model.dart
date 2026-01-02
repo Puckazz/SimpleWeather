@@ -137,6 +137,16 @@ class ForecastModel extends Equatable {
       mainCondition = noonItem.main;
       icon = noonItem.icon;
 
+      // compute averaged stats for the day
+      int avgHumidity = 0;
+      double avgWind = 0.0;
+      int avgClouds = 0;
+      if (dayItems.isNotEmpty) {
+        avgHumidity = (dayItems.map((e) => e.humidity).reduce((a, b) => a + b) / dayItems.length).round();
+        avgWind = dayItems.map((e) => e.windSpeed).reduce((a, b) => a + b) / dayItems.length;
+        avgClouds = (dayItems.map((e) => e.cloudiness).reduce((a, b) => a + b) / dayItems.length).round();
+      }
+
       dailyList.add(
         DailyForecast(
           dateTime: dayItems.first.dateTime,
@@ -144,6 +154,9 @@ class ForecastModel extends Equatable {
           tempMax: maxTemp,
           main: mainCondition,
           icon: icon,
+          humidity: avgHumidity,
+          windSpeed: avgWind,
+          cloudiness: avgClouds,
         ),
       );
     });
@@ -162,6 +175,9 @@ class DailyForecast extends Equatable {
   final double tempMax;
   final String main;
   final String icon;
+  final int humidity;
+  final double windSpeed;
+  final int cloudiness;
 
   const DailyForecast({
     required this.dateTime,
@@ -169,6 +185,9 @@ class DailyForecast extends Equatable {
     required this.tempMax,
     required this.main,
     required this.icon,
+    required this.humidity,
+    required this.windSpeed,
+    required this.cloudiness,
   });
 
   DateTime get dateTimeAsDateTime =>
@@ -189,5 +208,5 @@ class DailyForecast extends Equatable {
   }
 
   @override
-  List<Object> get props => [dateTime, tempMin, tempMax, main, icon];
+  List<Object> get props => [dateTime, tempMin, tempMax, main, icon, humidity, windSpeed, cloudiness];
 }

@@ -37,67 +37,72 @@ class DailyForecastItem extends StatelessWidget {
         ).round();
         final unitSymbol = unitController.unitSymbol;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 45,
-                child: Text(
-                  dayName,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).textTheme.headlineSmall!.color,
-                  ),
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              if (Theme.of(context).brightness == Brightness.dark)
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Icon(icon, color: iconColor, size: 22),
-              const SizedBox(width: 10),
-              SizedBox(
-                width: 60,
-                child: Text(
-                  condition,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '$displayTempMin$unitSymbol',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(width: 12),
-              // Temperature bar
-              Container(
-                width: 50,
-                height: 4,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      iconColor,
-                      Theme.of(context).brightness == Brightness.light
-                          ? Colors.grey[300]!
-                          : Colors.white24,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 40,
-                child: Text(
-                  '$displayTempMax$unitSymbol',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.headlineSmall!.color,
-                  ),
-                  textAlign: TextAlign.right,
-                ),
-              ),
             ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 70,
+                  child: Text(
+                    dayName,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.headlineSmall!.color,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    condition,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '$displayTempMax$unitSymbol',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).textTheme.headlineSmall!.color,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '$displayTempMin$unitSymbol',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },

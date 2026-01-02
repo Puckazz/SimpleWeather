@@ -7,6 +7,7 @@ import 'package:weather_app/presentation/controllers/temperature_unit_controller
 import 'package:weather_app/presentation/pages/settings_page.dart';
 import 'package:weather_app/presentation/pages/manage_cities_page.dart';
 import 'package:weather_app/presentation/pages/hourly_forecast_page.dart';
+import 'package:weather_app/presentation/pages/next7days_page.dart';
 import 'package:weather_app/presentation/widgets/widgets.dart';
 
 class HomePage extends StatefulWidget {
@@ -327,7 +328,12 @@ class _HomePageState extends State<HomePage> {
                 CupertinoIcons.calendar,
                 color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Next7DaysPage()),
+                );
+              },
             ),
           ],
         ),
