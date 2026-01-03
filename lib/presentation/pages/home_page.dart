@@ -8,6 +8,7 @@ import 'package:weather_app/presentation/controllers/location_controller.dart';
 import 'package:weather_app/presentation/pages/settings_page.dart';
 import 'package:weather_app/presentation/pages/manage_cities_page.dart';
 import 'package:weather_app/presentation/pages/hourly_forecast_page.dart';
+import 'package:weather_app/presentation/pages/next7days_page.dart';
 import 'package:weather_app/presentation/widgets/widgets.dart';
 
 class HomePage extends StatefulWidget {
@@ -117,8 +118,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             ),
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20.0,
+                            padding: const EdgeInsets.only(
+                              left: 20.0,
+                              right: 20.0,
+                              bottom: 20.0,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,7 +408,14 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 CupertinoIcons.calendar,
                 color: Theme.of(context).textTheme.bodyMedium!.color,
               ),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const Next7DaysPage(),
+                  ),
+                );
+              },
             ),
           ],
         ),

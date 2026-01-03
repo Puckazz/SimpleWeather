@@ -14,8 +14,10 @@ import 'package:weather_app/presentation/controllers/temperature_unit_controller
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'dart:io' show Platform;
 import 'package:weather_app/presentation/pages/splash_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
+void main() async {
+  await dotenv.load(fileName: ".env.local");
   AppConfig.validate();
 
   // Only use DevicePreview on emulator/simulator in debug mode
@@ -32,8 +34,6 @@ bool _isPhysicalDevice() {
   if (kIsWeb) return false;
 
   try {
-    // Simple check - on emulator, these environment checks typically differ
-    // For more precise detection, you could check specific emulator properties
     final isEmulator =
         Platform.environment.containsKey('FLUTTER_TEST') ||
         Platform.environment.containsKey('ANDROID_EMULATOR');

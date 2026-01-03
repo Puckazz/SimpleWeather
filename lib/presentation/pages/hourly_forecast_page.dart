@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:weather_app/presentation/controllers/weather_controller.dart';
 import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
 import 'package:weather_app/presentation/widgets/weather_helpers.dart';
+import 'package:weather_app/core/utils/helpers.dart';
 import 'package:weather_app/data/models/forecast_model.dart';
 
 class HourlyForecastPage extends StatelessWidget {
@@ -204,6 +205,12 @@ class HourlyForecastPage extends StatelessWidget {
     final iconColor = WeatherHelpers.getWeatherColor(item.main, item.icon);
     final conditionText = WeatherHelpers.getConditionText(item.main, item.icon);
 
+    final unitController = context.watch<TemperatureUnitController>();
+    final displayTemp = Helpers.getTemperature(
+      item.temperature,
+      isFahrenheit: unitController.isFahrenheit,
+    ).toInt();
+
     // Additional info based on conditions
     String? additionalInfo;
     if (item.rain3h != null && item.rain3h! > 0) {
@@ -229,7 +236,9 @@ class HourlyForecastPage extends StatelessWidget {
                 end: Alignment.bottomRight,
               )
             : null,
-        color: isNow ? null : Theme.of(context).cardColor.withValues(alpha: 0.7),
+        color: isNow
+            ? null
+            : Theme.of(context).cardColor.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isNow
@@ -302,7 +311,7 @@ class HourlyForecastPage extends StatelessWidget {
           SizedBox(
             width: 44,
             child: Text(
-              '${item.temperature.toInt()}$unitSymbol',
+              '$displayTemp$unitSymbol',
               textAlign: TextAlign.right,
               style: TextStyle(
                 fontSize: 20,
