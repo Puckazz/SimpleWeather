@@ -184,7 +184,7 @@ class Next7DaysPage extends StatelessWidget {
 class DayTile extends StatefulWidget {
   final dynamic day;
 
-  const DayTile({Key? key, required this.day}) : super(key: key);
+  const DayTile({super.key, required this.day});
 
   @override
   State<DayTile> createState() => _DayTileState();
@@ -367,12 +367,11 @@ class _StatTile extends StatelessWidget {
   final Color color;
 
   const _StatTile({
-    Key? key,
     required this.icon,
     required this.label,
     required this.title,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

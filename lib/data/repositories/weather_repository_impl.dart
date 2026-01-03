@@ -3,21 +3,7 @@ import 'package:weather_app/data/datasources/weather_remote_data_source.dart';
 import 'package:weather_app/data/models/weather_model.dart';
 import 'package:weather_app/data/models/forecast_model.dart';
 import 'package:weather_app/domain/entities/weather_entity.dart';
-
-abstract class WeatherRepository {
-  Future<WeatherEntity> getWeatherByCity(String city, {String units = 'metric'});
-  Future<WeatherEntity> getWeatherByCoordinates(
-    double latitude,
-    double longitude, {
-    String units = 'metric',
-  });
-  Future<ForecastModel> getForecastByCity(String city, {String units = 'metric'});
-  Future<ForecastModel> getForecastByCoordinates(
-    double latitude,
-    double longitude, {
-    String units = 'metric',
-  });
-}
+import 'package:weather_app/domain/repositories/weather_repository.dart';
 
 class WeatherRepositoryImpl implements WeatherRepository {
   final WeatherRemoteDataSource remoteDataSource;

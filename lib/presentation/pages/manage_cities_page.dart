@@ -7,6 +7,7 @@ import 'package:weather_app/presentation/controllers/temperature_unit_controller
 import 'package:weather_app/presentation/widgets/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_app/domain/entities/weather_entity.dart';
+import 'package:weather_app/domain/usecases/get_current_weather.dart';
 
 class ManageCitiesPage extends StatefulWidget {
   const ManageCitiesPage({super.key});
@@ -98,7 +99,7 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
       _isLoadingWeather = true;
     });
 
-    final useCase = context.read<WeatherController>().getWeatherUseCase;
+    final useCase = context.read<GetCurrentWeatherUseCase>();
 
     for (final location in _savedLocations) {
       final name = location['name'] as String;
@@ -106,11 +107,7 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
       final lon = location['lon'] as double;
 
       try {
-        final weather = await useCase.callByCoordinates(
-          lat,
-          lon,
-          units: 'metric',
-        );
+        final weather = await useCase.byCoordinates(lat, lon, units: 'metric');
         if (mounted) {
           setState(() {
             _citiesWeather[name] = weather;
@@ -133,13 +130,9 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
     double lat,
     double lon,
   ) async {
-    final useCase = context.read<WeatherController>().getWeatherUseCase;
+    final useCase = context.read<GetCurrentWeatherUseCase>();
     try {
-      final weather = await useCase.callByCoordinates(
-        lat,
-        lon,
-        units: 'metric',
-      );
+      final weather = await useCase.byCoordinates(lat, lon, units: 'metric');
       if (mounted) {
         setState(() {
           _citiesWeather[cityName] = weather;

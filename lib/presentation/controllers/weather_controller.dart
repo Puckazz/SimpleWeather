@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:weather_app/core/utils/logger.dart';
 import 'package:weather_app/data/models/forecast_model.dart';
 import 'package:weather_app/domain/entities/weather_entity.dart';
-import 'package:weather_app/domain/usecases/get_weather.dart';
+import 'package:weather_app/domain/usecases/get_current_weather.dart';
+import 'package:weather_app/domain/usecases/get_forecast.dart';
 
 class WeatherController extends ChangeNotifier {
-  final GetWeatherUseCase getWeatherUseCase;
+  final GetCurrentWeatherUseCase getCurrentWeatherUseCase;
+  final GetForecastUseCase getForecastUseCase;
 
-  WeatherController({required this.getWeatherUseCase});
+  WeatherController({
+    required this.getCurrentWeatherUseCase,
+    required this.getForecastUseCase,
+  });
 
   WeatherEntity? _weather;
   ForecastModel? _forecast;
@@ -41,8 +46,8 @@ class WeatherController extends ChangeNotifier {
     try {
       // Always fetch with metric (Celsius) for consistent storage
       final results = await Future.wait([
-        getWeatherUseCase.call(city, units: 'metric'),
-        getWeatherUseCase.getForecastByCity(city, units: 'metric'),
+        getCurrentWeatherUseCase(city, units: 'metric'),
+        getForecastUseCase(city, units: 'metric'),
       ]);
 
       _weather = results[0] as WeatherEntity;
@@ -75,16 +80,12 @@ class WeatherController extends ChangeNotifier {
     try {
       // Always fetch with metric (Celsius) for consistent storage
       final results = await Future.wait([
-        getWeatherUseCase.callByCoordinates(
+        getCurrentWeatherUseCase.byCoordinates(
           latitude,
           longitude,
           units: 'metric',
         ),
-        getWeatherUseCase.getForecastByCoordinates(
-          latitude,
-          longitude,
-          units: 'metric',
-        ),
+        getForecastUseCase.byCoordinates(latitude, longitude, units: 'metric'),
       ]);
 
       _weather = results[0] as WeatherEntity;

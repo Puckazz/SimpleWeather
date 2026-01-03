@@ -211,11 +211,7 @@ class _SplashScreenState extends State<SplashScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Weather icon
-                    Icon(
-                      Icons.wb_cloudy,
-                      size: 120,
-                      color: Colors.white,
-                    ),
+                    Icon(Icons.wb_cloudy, size: 120, color: Colors.white),
                     const SizedBox(height: 24),
                     // App name
                     Text(
@@ -232,7 +228,7 @@ class _SplashScreenState extends State<SplashScreen>
                       'Your personal weather companion',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -244,7 +240,7 @@ class _SplashScreenState extends State<SplashScreen>
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white.withOpacity(0.8),
+                          Colors.white.withValues(alpha: 0.8),
                         ),
                       ),
                     ),
