@@ -52,25 +52,25 @@ class DailyForecastItem extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Icon(icon, color: iconColor, size: 22),
-              const SizedBox(width: 10),
-              SizedBox(
-                width: 60,
+              const SizedBox(width: 8),
+              Expanded(
                 child: Text(
                   condition,
                   style: Theme.of(context).textTheme.bodyMedium,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(
                 '$displayTempMin$unitSymbol',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               // Temperature bar
               Container(
-                width: 50,
+                width: 40,
                 height: 4,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -84,7 +84,7 @@ class DailyForecastItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               SizedBox(
                 width: 40,
                 child: Text(

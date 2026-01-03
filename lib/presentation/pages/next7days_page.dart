@@ -5,7 +5,6 @@ import 'package:weather_app/presentation/controllers/weather_controller.dart';
 import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
 import 'package:weather_app/presentation/widgets/weather_helpers.dart';
 import 'package:weather_app/core/utils/helpers.dart';
-import 'package:weather_app/presentation/widgets/widgets.dart';
 
 class Next7DaysPage extends StatelessWidget {
   const Next7DaysPage({super.key});
@@ -20,11 +19,11 @@ class Next7DaysPage extends StatelessWidget {
         return Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: Theme.of(context).cardColor,
             elevation: 0,
+            backgroundColor: Colors.transparent,
             leading: IconButton(
               icon: Icon(
-                Icons.arrow_back,
+                CupertinoIcons.back,
                 color: Theme.of(context).iconTheme.color,
               ),
               onPressed: () => Navigator.of(context).pop(),
@@ -33,21 +32,11 @@ class Next7DaysPage extends StatelessWidget {
             title: Column(
               children: [
                 Text(
-                  '7-Day Forecast',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).textTheme.headlineSmall?.color,
-                  ),
+                  '7Days Forecast',
+                  style: Theme.of(context).textTheme.headlineSmall,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  city,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
-                  ),
-                ),
+                const SizedBox(height: 2),
+                Text(city, style: Theme.of(context).textTheme.bodyMedium),
               ],
             ),
           ),
@@ -60,55 +49,21 @@ class Next7DaysPage extends StatelessWidget {
                 )
               : SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Tomorrow card (prominent)
+                        const SizedBox(height: 20),
+                        // Tomorrow card
                         _buildTomorrowCard(context, daily),
                         const SizedBox(height: 24),
-
-                        // Section header like ManageCities
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '7-DAY FORECAST',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium!.color,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                            Text(
-                              '${daily.length} DAYS',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium!.color,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Expandable day list with details
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: daily.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final day = daily[index];
-                            return _buildDayTile(context, day);
-                          },
+                        // Days list
+                        ...List.generate(
+                          daily.length,
+                          (index) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: _buildDayItem(context, daily[index]),
+                          ),
                         ),
                         const SizedBox(height: 20),
                       ],
@@ -151,8 +106,8 @@ class Next7DaysPage extends StatelessWidget {
               children: [
                 Text(
                   'Tomorrow',
-                  style: TextStyle(
-                    color: const Color(0xFF42A5F5),
+                  style: const TextStyle(
+                    color: Color(0xFF42A5F5),
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -165,17 +120,13 @@ class Next7DaysPage extends StatelessWidget {
                       tomorrow.tempMax,
                       isFahrenheit: isFahrenheit,
                     ).round();
-                    final displayMin = Helpers.getTemperature(
-                      tomorrow.tempMin,
-                      isFahrenheit: isFahrenheit,
-                    ).round();
                     final unitSymbol = unitController.unitSymbol;
                     return Text(
-                      '$displayTemp°$unitSymbol',
-                      style: const TextStyle(
+                      '$displayTemp$unitSymbol',
+                      style: TextStyle(
                         fontSize: 48,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Theme.of(context).textTheme.headlineSmall?.color,
                       ),
                     );
                   },
@@ -190,7 +141,7 @@ class Next7DaysPage extends StatelessWidget {
                     ).round();
                     final unitSymbol = unitController.unitSymbol;
                     return Text(
-                      '/ $displayMin°$unitSymbol',
+                      '/ $displayMin$unitSymbol',
                       style: TextStyle(
                         fontSize: 16,
                         color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -225,203 +176,230 @@ class Next7DaysPage extends StatelessWidget {
   }
 
   Widget _buildDayItem(BuildContext context, dynamic day) {
-    final icon = WeatherHelpers.getWeatherIcon(day.main, day.icon);
-    final color = WeatherHelpers.getWeatherColor(day.main, day.icon);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Icon
-          Icon(icon, size: 28, color: color),
-          const SizedBox(width: 16),
-          // Day name
-          SizedBox(
-            width: 70,
-            child: Text(
-              day.dayName,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          // Condition
-          Expanded(
-            child: Text(
-              WeatherHelpers.getConditionText(day.main, day.icon),
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).textTheme.bodyMedium?.color,
-              ),
-            ),
-          ),
-          // Temps
-          Consumer<TemperatureUnitController>(
-            builder: (context, unitController, _) {
-              final isFahrenheit = unitController.isFahrenheit;
-              final displayMin = Helpers.getTemperature(
-                day.tempMin,
-                isFahrenheit: isFahrenheit,
-              ).round();
-              final displayMax = Helpers.getTemperature(
-                day.tempMax,
-                isFahrenheit: isFahrenheit,
-              ).round();
-              final unitSymbol = unitController.unitSymbol;
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '$displayMax°',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '$displayMin°',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
+    return DayTile(day: day);
   }
+}
 
-  Widget _buildDayTile(BuildContext context, dynamic day) {
+/// An expandable/tappable day tile with smooth animation and small icons
+class DayTile extends StatefulWidget {
+  final dynamic day;
+
+  const DayTile({Key? key, required this.day}) : super(key: key);
+
+  @override
+  State<DayTile> createState() => _DayTileState();
+}
+
+class _DayTileState extends State<DayTile> with SingleTickerProviderStateMixin {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final day = widget.day;
     final icon = WeatherHelpers.getWeatherIcon(day.main, day.icon);
     final color = WeatherHelpers.getWeatherColor(day.main, day.icon);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withValues(alpha: 0.3),
           ),
-        ],
-      ),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        childrenPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
+          borderRadius: BorderRadius.circular(16),
         ),
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: color, size: 28),
-        ),
-        title: Text(
-          day.dayName,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        subtitle: Text(
-          WeatherHelpers.getConditionText(day.main, day.icon),
-          style: TextStyle(
-            fontSize: 13,
-            color: Theme.of(context).textTheme.bodyMedium?.color,
-          ),
-        ),
-        trailing: Consumer<TemperatureUnitController>(
-          builder: (context, unitController, _) {
-            final isFahrenheit = unitController.isFahrenheit;
-            final displayMin = Helpers.getTemperature(
-              day.tempMin,
-              isFahrenheit: isFahrenheit,
-            ).round();
-            final displayMax = Helpers.getTemperature(
-              day.tempMax,
-              isFahrenheit: isFahrenheit,
-            ).round();
-            final unit = unitController.unitSymbol;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              right: -30,
+              bottom: -20,
+              child: Icon(
+                icon,
+                size: 120,
+                color: color.withValues(alpha: 0.06),
+              ),
+            ),
+            Column(
               children: [
-                Text(
-                  '$displayMax°$unit',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => setState(() => _expanded = !_expanded),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(icon, size: 24, color: color),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              day.dayName,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.headlineSmall!.color,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              WeatherHelpers.getConditionText(
+                                day.main,
+                                day.icon,
+                              ),
+                              style: Theme.of(context).textTheme.bodyMedium,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Consumer<TemperatureUnitController>(
+                        builder: (context, unitController, _) {
+                          final isFahrenheit = unitController.isFahrenheit;
+                          final displayMin = Helpers.getTemperature(
+                            day.tempMin,
+                            isFahrenheit: isFahrenheit,
+                          ).round();
+                          final displayMax = Helpers.getTemperature(
+                            day.tempMax,
+                            isFahrenheit: isFahrenheit,
+                          ).round();
+                          final unitSymbol = unitController.unitSymbol;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '$displayMax$unitSymbol',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(
+                                    context,
+                                  ).textTheme.headlineSmall!.color,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'L:$displayMin$unitSymbol',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '$displayMin°$unit',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeInOutCubic,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 350),
+                    transitionBuilder: (child, anim) => FadeTransition(
+                      opacity: anim,
+                      child: SizeTransition(
+                        sizeFactor: anim,
+                        axisAlignment: -1.0,
+                        child: child,
+                      ),
+                    ),
+                    child: _expanded
+                        ? Padding(
+                            key: const ValueKey(true),
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _StatTile(
+                                  icon: Icons.water_drop,
+                                  label: '${day.humidity}%',
+                                  title: 'Humidity',
+                                  color: color,
+                                ),
+                                const SizedBox(width: 12),
+                                _StatTile(
+                                  icon: Icons.air,
+                                  label:
+                                      '${day.windSpeed.toStringAsFixed(1)} m/s',
+                                  title: 'Wind',
+                                  color: color,
+                                ),
+                                const SizedBox(width: 12),
+                                _StatTile(
+                                  icon: Icons.cloud,
+                                  label: '${day.cloudiness}%',
+                                  title: 'Clouds',
+                                  color: color,
+                                ),
+                              ],
+                            ),
+                          )
+                        : const SizedBox.shrink(key: ValueKey(false)),
                   ),
                 ),
               ],
-            );
-          },
+            ),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String title;
+  final Color color;
+
+  const _StatTile({
+    Key? key,
+    required this.icon,
+    required this.label,
+    required this.title,
+    required this.color,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: StatCard(
-                  icon: CupertinoIcons.drop_fill,
-                  iconColor: Colors.blue,
-                  label: 'Humidity',
-                  value: '${day.humidity ?? 0}%',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: StatCard(
-                  icon: CupertinoIcons.wind,
-                  iconColor: Colors.green,
-                  label: 'Wind',
-                  value: '${(day.windSpeed ?? 0).toStringAsFixed(1)} m/s',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: StatCard(
-                  icon: CupertinoIcons.cloud_fill,
-                  iconColor: Colors.grey,
-                  label: 'Clouds',
-                  value: '${day.cloudiness ?? 0}%',
-                ),
-              ),
-            ],
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 20, color: color),
           ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(title, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
     );
