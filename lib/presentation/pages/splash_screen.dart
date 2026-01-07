@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:weather_app/config/app_config.dart';
 import 'package:weather_app/presentation/controllers/location_controller.dart';
 import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
 import 'package:weather_app/presentation/controllers/theme_controller.dart';
@@ -123,8 +124,7 @@ class _SplashScreenState extends State<SplashScreen>
     try {
       // First time launch - ask for permission
       if (!locationController.hasAskedPermission) {
-        final granted = await locationController
-            .requestPermissionOnFirstLaunch();
+        final granted = await locationController.requestPermissionOnFirstLaunch();
         if (granted) {
           await _fetchWeatherByLocation(
             locationController,
@@ -143,19 +143,26 @@ class _SplashScreenState extends State<SplashScreen>
         return;
       }
 
-      // Fallback to default city if location is not available
-      logger.d('Loading default city weather');
-      await weatherController.fetchWeatherByCity(
-        'San Francisco',
-        units: unitController.unit,
-      );
+      // Only load hardcoded city in dev mode
+      if (AppConfig.useHardcodedCities) {
+        logger.d('Loading default city weather');
+        await weatherController.fetchWeatherByCity(
+          'San Francisco',
+          units: unitController.unit,
+        );
+      } else {
+        // Production: no location -> show empty state
+        logger.d('No location available in production mode');
+      }
     } catch (e) {
       logger.e('Error loading weather data: $e');
-      // Load default city on error
-      await weatherController.fetchWeatherByCity(
-        'San Francisco',
-        units: unitController.unit,
-      );
+      // Only load fallback city in dev mode
+      if (AppConfig.useHardcodedCities) {
+        await weatherController.fetchWeatherByCity(
+          'San Francisco',
+          units: unitController.unit,
+        );
+      }
     }
   }
 
@@ -174,8 +181,8 @@ class _SplashScreenState extends State<SplashScreen>
         displayName: location.displayName,
         units: unitController.unit,
       );
-    } else {
-      // Fallback to default city
+    } else if (AppConfig.useHardcodedCities) {
+      // Chỉ fallback ở dev mode
       logger.d('Location not available, loading default city');
       await weatherController.fetchWeatherByCity(
         'San Francisco',

@@ -5,13 +5,16 @@ import 'package:weather_app/config/app_config.dart';
 import 'package:weather_app/config/app_theme.dart';
 import 'package:weather_app/injection_container.dart';
 import 'package:weather_app/presentation/controllers/theme_controller.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb, kReleaseMode;
 import 'dart:io' show Platform;
 import 'package:weather_app/presentation/pages/splash_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
-  await dotenv.load(fileName: ".env.local");
+  // Init dotenv
+  final envFile = kReleaseMode ? '.env.prod' : '.env.local';
+  await dotenv.load(fileName: envFile);
+  
   AppConfig.validate();
 
   // Only use DevicePreview on emulator/simulator in debug mode
