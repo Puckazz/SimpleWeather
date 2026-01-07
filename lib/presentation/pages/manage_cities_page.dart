@@ -8,6 +8,7 @@ import 'package:weather_app/presentation/widgets/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:weather_app/domain/entities/weather_entity.dart';
 import 'package:weather_app/domain/usecases/get_current_weather.dart';
+import 'package:weather_app/config/app_config.dart';
 
 class ManageCitiesPage extends StatefulWidget {
   const ManageCitiesPage({super.key});
@@ -52,20 +53,15 @@ class _ManageCitiesPageState extends State<ManageCitiesPage> {
         }).toList();
       });
     } else {
-      // Migrate old data or use defaults
+      // Sử dụng AppConfig thay vì hardcode
       setState(() {
-        _savedLocations = <Map<String, dynamic>>[
-          <String, dynamic>{
-            'name': 'New York',
-            'lat': 40.7128,
-            'lon': -74.0060,
-          },
-          <String, dynamic>{'name': 'London', 'lat': 51.5074, 'lon': -0.1278},
-          <String, dynamic>{'name': 'Tokyo', 'lat': 35.6762, 'lon': 139.6503},
-          <String, dynamic>{'name': 'Sydney', 'lat': -33.8688, 'lon': 151.2093},
-        ];
+        _savedLocations = AppConfig.defaultCities
+            .map((city) => Map<String, dynamic>.from(city))
+            .toList();
       });
-      _saveCities();
+      if (_savedLocations.isNotEmpty) {
+        _saveCities();
+      }
     }
     _fetchWeatherForCities();
   }

@@ -44,6 +44,7 @@ dependencies:
   geolocator: ^14.0.2
   geocoding: ^4.0.0
   flutter_dotenv: ^6.0.0
+  package_info_plus: ^8.0.0
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +70,7 @@ flutter:
   uses-material-design: true
   assets:
     - .env.local
+    - .env.prod
 
   # To add assets to your application, add an assets section, like this:
   # assets:
