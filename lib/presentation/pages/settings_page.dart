@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:weather_app/presentation/controllers/theme_controller.dart';
 import 'package:weather_app/presentation/controllers/temperature_unit_controller.dart';
 import 'package:weather_app/presentation/controllers/location_controller.dart';
@@ -16,10 +17,20 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage>
     with WidgetsBindingObserver {
+  String _appVersion = '';
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _loadAppVersion();
+  }
+
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    setState(() {
+      _appVersion = 'v${packageInfo.version}+${packageInfo.buildNumber}';
+    });
   }
 
   @override
@@ -301,7 +312,7 @@ class _SettingsPageState extends State<SettingsPage>
           ),
           const SizedBox(height: 16),
           Text(
-            'Weather App v2.4.0',
+            'Weather App $_appVersion',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
